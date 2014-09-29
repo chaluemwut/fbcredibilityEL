@@ -1,7 +1,7 @@
-// var base_url = "https://www.fbcredibility.com/sdc/";
-var base_url = "https://www.sdc.com/sdc/";
-var server_url = base_url+"fbgetcredit2";
-var feedback_url = base_url+"fbfeedback";
+var base_url = "https://www.fbcredibility.com/sdc/";
+// var base_url = "https://www.sdc.com/sdc/";
+var server_url = base_url+"fbevaluator2";
+// var feedback_url = base_url+"fbfeedback";
 // var server_url = "https://lab.socialdatacomputing.com/sdc/";
 
 function createSourceButton(ref){
@@ -21,27 +21,58 @@ function createAssessmentButton(divId){
 	ret += '</div>';
 	return ret
 }
+function createFeatureDiv(divId, feature){
+	ret ='<div>';
+	ret += templateFeatureDiv('likes_'+divId, feature['likes']);
+	ret += templateFeatureDiv('comments_'+divId, feature['comments']);
+	ret += templateFeatureDiv('shares_'+divId, feature['shares']);
+	ret += templateFeatureDiv('url_'+divId, feature['url']);
+	ret += templateFeatureDiv('hashtag_'+divId, feature['hash_tag']);
+	ret += templateFeatureDiv('images_'+divId, feature['images']);
+	ret += templateFeatureDiv('vdo_'+divId, feature['vdo']);
+	ret += templateFeatureDiv('is_location_'+divId, feature['is_location']);
+	ret += '</div>';
+	return ret;
+}
 
-function createFBCredibilityDiv(divId, message) {
-	ret = '<div id=kku_'+divId+' style="position: relative; margin-top: 5px; width:100%; height:18px;">';
+function templateFeatureDiv(dataId, data){
+	return '<input type="hidden" id="'+dataId+'"value="'+data+'"/>';
+}
+
+function templateRating(counter){
+	ret = '<div style=height:100%>';
+	ret += ' <div id=rating_container_'+counter+'>';
+	ret += ' <input type="radio" id="radio'+counter+'" value="1" name="radio'+counter+'"/>';
+	ret += ' <input type="radio" id="radio'+counter+'" value="2" name="radio'+counter+'"/>';
+	ret += ' <input type="radio" id="radio'+counter+'" value="3" name="radio'+counter+'"/>';
+	ret += ' <input type="radio" id="radio'+counter+'" value="4" name="radio'+counter+'"/>';
+	ret += ' <input type="radio" id="radio'+counter+'" value="5" name="radio'+counter+'"/>';
+	ret += ' <input type="radio" id="radio'+counter+'" value="6" name="radio'+counter+'"/>';
+	ret += ' <input type="radio" id="radio'+counter+'" value="7" name="radio'+counter+'"/>';
+	ret += ' <input type="radio" id="radio'+counter+'" value="8" name="radio'+counter+'"/>';
+	ret += ' <input type="radio" id="radio'+counter+'" value="9" name="radio'+counter+'"/>';
+	ret += ' <input type="radio" id="radio'+counter+'" value="10" name="radio'+counter+'"/>';
+	ret += ' <button id=sub_'+counter+'>submit</button>';
+	ret += ' </div>';
+	ret += ' <div style="margin-left:80px">';
+	ret += ' <img src="'+chrome.extension.getURL('rating2.png')+'"/>';
+	ret += ' </div>';	
+	ret += '<div>';
+	return ret;
+}
+
+function createFBCredibilityDiv(divId, message, feature) {
+	ret = '<div id=kku_'+divId+' style="position: relative; margin-top: 10px; margin-bottom: 20px; width:100%; height:18px;">';
 	ret += '<div class="inline" style="position: relative; margin-top: 3px; color:#FF8000;">FB Credibility</div>';
 	// ret += '<img class="inline" id=img_'+divId+' src="https://dl.dropboxusercontent.com/u/7385478/waiting.gif"  width="20" height="20" alt="Loading"/>';
 	// ret += createSourceButton(divId);
 	// ret += '<div id=fb_result_'+divId+' class="inline" style="position: relative; margin-top: 4px; margin-left: 10px;">: '+message+'</div>';
 	ret += '<div id=fb_result_'+divId+' class="inline" style="position: relative; margin-top: 4px; margin-left: 10px;">: </div>';
 	// ret += '<img src="chrome-extension://kpdmecaibnbaihjbghbikjbmihelikeg/scal1.png"></img>';
-	ret += createAssessmentButton(divId);
+	ret += createFeatureDiv(divId, feature);
+	ret += templateRating(divId);
 	ret += '</div>';
 	return ret;
-}
-
-function templateDiv(divId, textContent) {
-	ret = '<div id=kku_'+divId+' style="position: relative; margin-top: 5px; width:100%; height:18px;">';
-	ret += '<div class="inline" style="position: relative; margin-top: 3px;">FB Credibility</div>';
-	ret += textContent;
-	// ret += createAssessmentButton();
-	ret += '</div>';
-	return ret;	
 }
 
 function getObjId(link){
@@ -194,7 +225,16 @@ function get_like_comment_share(sub_stream){
 	return ret_obj;
 }
 
-function get_location_number(){
+function get_location_number(sub_stream){
+	// //*[@id="u_jsonp_2_1m"]/div/div[2]
+	// //*[@id="js_81"]
+	var location_div = $(sub_stream).find("div[class='clearfix _5x46'] > div[class='_3dp _29k'] > div >");
+	var location_span = $(sub_stream).find("span[class='fsm fwn fcg'] > a[class='_5pcq']");
+	if (location_span.length ==2){
+		return 1;
+	} else {
+		return 0;
+	}
 
 }
 
@@ -219,6 +259,13 @@ function get_content_image(user_content, user_content_img){
 	return img_num.length-is_vdo.length;
 }
 
+function get_user_name(){
+	// fbxWelcomeBoxName
+	var user_name = $("a[class='fbxWelcomeBoxName']");
+	console.log(user_name);
+	return user_name.text();
+}
+
 
 $(document).ready(function () {
 
@@ -235,6 +282,15 @@ $(document).ready(function () {
 			var vdo_count = get_content_vdo(user_content, user_content_img);
 
 			var common = get_like_comment_share(sub_stream);
+			var feature = {};
+			feature['likes'] = common[0];
+			feature['comments'] = common[1];
+			feature['shares'] = common[2];
+			feature['url'] = url_count;
+			feature['hash_tag'] = hash_tag;
+			feature['images'] = img_count;
+			feature['vdo'] = vdo_count;
+			feature['is_location'] = get_location_number(sub_stream);
 			var out_data = 't:'+common[4]+' l:'+common[0]+
 			               ' c:'+common[1]+' s:'+common[2]+
 			               ' url:'+url_count+' has:'+hash_tag+' img:'+img_count+
@@ -249,23 +305,62 @@ $(document).ready(function () {
 				}
 				// console.log('link id '+link_id.attr('href'));
 				var post_id = getObjId(link_id.attr('href'));
-				clearfix.append(createFBCredibilityDiv(i, out_data));
+				clearfix.append(createFBCredibilityDiv(i, out_data, feature));
 				var urlCall = server_url+"?likes="+common[0]+"&comments="+common[1]+
 							  "&shares="+common[2]+"&url="+url_count+
 							  "&hashtag="+hash_tag+"&images="+img_count+
 							  "&vdo="+vdo_count+
-							  "&return_id="+i;			
-				$.ajax({
-					type: "GET",
-					async: true,
-					url: urlCall,
-					withCredentials: true,
-					success: function(result){
-						// console.log(result);
-						var ret_id = result['return_id'];
-						var divObj = $('#fb_result_'+ret_id);
-						divObj.attr('class', 'rating'+result['rating']);
-					}
+							  "&return_id="+i;
+				$("#sub_"+i).click(function(){
+					var obj = $(this);
+					// console.log('counter '+obj.attr('id'));
+					var obj_id = obj.attr('id').replace("sub_","");
+					var data = $("#radio"+obj_id+":checked");
+					var likes = $("#likes_"+obj_id).val();
+					var shares = $("#shares_"+obj_id).val();
+					var comments = $("#comments_"+obj_id).val();
+					var url = $("#url_"+obj_id).val();
+					var hashtag = $("#hashtag_"+obj_id).val();
+					var images = $("#images_"+obj_id).val();
+					var vdo = $("#vdo_"+obj_id).val();
+					var location = $("#is_location_"+obj_id).val();
+					// var post_obj = $(sub_stream).find("#fb_link_"+obj_id);
+					// var post_id = getObjId(post_obj.val());
+					// console.log('post id '+post_id);
+					// console.log(post_id.val());
+					// var token = localStorage.accessToken.replace('access_token=','')
+					// var token = localStorage.accessToken
+					var urlCall = server_url+"?rating="+data.val()+"&return_id="+obj_id+
+								"&likes="+likes+
+								"&shares="+shares+
+								"&comments="+comments+
+								"&url="+url+
+								"&hashtag="+hashtag+
+								"&images="+images+
+								"&vdo="+vdo+
+								"&location="+location+
+								"&user_name="+get_user_name();
+
+					console.log('url '+urlCall);
+					$.ajax({
+						type: "GET",
+						async: true,
+						url: urlCall,
+						withCredentials: true,
+						success: function(result){
+							console.log(result);
+							ret_id = result['return_id'];
+							description = result['description'];
+							var data = '';
+							if (result['status'] == 0) {
+								data = '<span id=msg_'+ret_id+' style="color:green;">'+description+'</span>';
+							} else {
+								data = '<span id=msg_'+ret_id+' style="color:red;">'+description+'</span>';
+							}
+							$('#rating_container_'+ret_id).append(data);
+							// $('#msg_'+ret_id).addClass('inline');
+						}
+					});
 				});				
 			}
 		});

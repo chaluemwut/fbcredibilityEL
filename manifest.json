@@ -1,9 +1,9 @@
 {
   "manifest_version": 2,
 
-  "name": "FB credibility",
+  "name": "FB credibility Evaluator - JQuery",
   "description": "Measurement credibility on facebook",
-  "version": "2.0",
+  "version": "1.1",
 
   "content_scripts": [
   {
@@ -20,6 +20,7 @@
     "https://www.sdc.com/sdc/*"
   ],
   "web_accessible_resources": [
-      "jquery/images/*"
+      "jquery/images/*",
+      "rating2.png"
   ]  
 }
